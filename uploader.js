@@ -36,7 +36,7 @@ async function recordHash(line) {
 
 	  return;
 
-  } catch(e) { throw Error(e); }
+  } catch(e) { throw e; }
 }
 
 // Recurcively access to ipfs server
@@ -55,7 +55,7 @@ async function recursiveAccess() {
 	  if (!_uploaded) return false;
 	  else return true;
 
-	} catch(e) { throw Error(e); }
+	} catch(e) { throw e; }
 }
 
 // Check whether upload task finish
@@ -65,22 +65,26 @@ async function checkUpload() {
 		let _cycle = 0;
 
 		const _recursiveAccessChecker = setInterval(async function() { 
-			_cycle++;
-			console.log("Cycle: " + _cycle);
+			try {
+				_cycle++;
+				console.log("Cycle: " + _cycle);
 
-			let canAccess = await recursiveAccess();
+				let canAccess = await recursiveAccess();
 
-			if (canAccess) { 
-				clearInterval(_recursiveAccessChecker);
-				ipfs.daemonKill();
-				console.log("Upload Completed!");
-				return;
-			}
+				if (canAccess) { _stopChecker("Upload Completed!"); }
+
+			} catch (e) { _stopChecker(e); }
 
 		}, timeout * hashes.length + 1000);
 
+		const _stopChecker = (msg) => {
+			console.log(msg);
+			clearInterval(_recursiveAccessChecker); 
+			ipfs.daemonKill();
+		}
 
-	} catch(e) { throw Error(e); }
+
+	} catch(e) { throw e; }
 }
 
 async function mainTask() {
